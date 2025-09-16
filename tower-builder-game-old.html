@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Строитель небоскрёба</title>
+    
+    <!-- Preload fonts for better caching -->
+    <link rel="preload" href="./assets/fonts/StranaFont-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./assets/fonts/StranaFont-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./assets/fonts/Circe-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        /* ===== FONTS ===== */
+        @font-face {
+            font-family: 'StranaFont';
+            src: url('./assets/fonts/StranaFont-Regular.woff2') format('woff2'),
+                 url('./assets/fonts/StranaFont-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'StranaFont';
+            src: url('./assets/fonts/StranaFont-Medium.woff2') format('woff2'),
+                 url('./assets/fonts/StranaFont-Medium.woff') format('woff');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Circe';
+            src: url('./assets/fonts/Circe-Regular.woff2') format('woff2'),
+                 url('./assets/fonts/Circe-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ===== BODY ===== */
+        .page {
+            font-family: 'StranaFont', sans-serif;
+            background: url('./assets/images/fake-modal.png') no-repeat center/cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* ===== GAME CONTAINER ===== */
+        .game {
+            position: relative;
+            width: min(815px, 100vw);
+            height: min(960px, 100vh);
+            aspect-ratio: 815 / 960;
+            background: 
+                linear-gradient(360deg, rgba(146, 39, 143, 0.7) 0%, rgba(198, 22, 141, 0.7) 57.99%, rgba(237, 28, 36, 0.7) 100%),
+                url('./assets/images/background-image.png') no-repeat center/cover;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* ===== BACKGROUND ===== */
+        .game__background {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 425px;
+            background: url('./assets/images/background-buildings.svg') no-repeat center bottom/cover;
+            z-index: 1;
+        }
+
+        /* ===== CLOUDS ===== */
+        .clouds {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .cloud {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.8;
+        }
+
+        .cloud--1 {
+            width: 180px;
+            height: 108px;
+            top: 60px;
+            left: -190px;
+            background-image: url('./assets/images/cloud1.svg');
+            animation: cloudMove1 25s linear infinite;
+        }
+
+        .cloud--2 {
+            width: 80px;
+            height: 48px;
+            top: 200px;
+            left: -90px;
+            background-image: url('./assets/images/cloud2.svg');
+            animation: cloudMove2 30s linear infinite 5s;
+        }
+
+        .cloud--3 {
+            width: 220px;
+            height: 132px;
+            top: 100px;
+            left: -230px;
+            background-image: url('./assets/images/cloud3.svg');
+            animation: cloudMove3 35s linear infinite 12s;
+        }
+
+        .cloud--4 {
+            width: 160px;
+            height: 96px;
+            top: 300px;
+            left: -170px;
+            background-image: url('./assets/images/cloud4.svg');
+            animation: cloudMove4 28s linear infinite 18s;
+        }
+
+        @keyframes cloudMove1 { to { left: 935px; } }
+        @keyframes cloudMove2 { to { left: 935px; } }
+        @keyframes cloudMove3 { to { left: 935px; } }
+        @keyframes cloudMove4 { to { left: 935px; } }
+        @keyframes cloudDynamic { to { left: 935px; } }
+
+        /* ===== SCORE ===== */
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            color: white;
+            z-index: 10;
+        }
+
+        /* ===== GAME AREA ===== */
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            cursor: pointer;
+        }
+
+        /* ===== ROAD ===== */
+        .road {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: url('./assets/images/road.svg') no-repeat center bottom/cover;
+            z-index: 4;
+        }
+
+        .road--animated {
+            transition: bottom 0.3s ease-out;
+        }
+
+        /* ===== FOUNDATION ===== */
+        .foundation {
+            position: absolute;
+            bottom: 43px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 120px;
+            background: url('./assets/images/foundation.svg') no-repeat center/contain;
+            z-index: 5;
+        }
+
+        .foundation--animated {
+            transition: bottom 0.3s ease-out;
+        }
+
+        /* ===== CRANE ===== */
+        .crane {
+            position: absolute;
+            width: 896px;
+            height: 160px;
+            background: url('./assets/images/crane.svg') no-repeat center/contain;
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0;
+            transition: top 0.3s ease-out, opacity 0.3s ease-out;
+            will-change: transform;
+            transform: translateZ(0); /* Принудительное создание композитного слоя */
+        }
+
+        /* ===== FLOOR ===== */
+        .floor {
+            position: absolute;
+            background: url('./assets/images/block.svg') repeat-x left center;
+            background-size: auto 100%;
+            border: 1px solid #D1E0DF;
+            z-index: 7;
+            will-change: transform;
+            transform: translateZ(0); /* Принудительное создание композитного слоя */
+        }
+
+        .floor--animated {
+            transition: bottom 0.3s ease-out;
+        }
+
+        .floor--falling {
+            z-index: 8;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
+
+        /* ===== PERFORMANCE OPTIMIZATIONS ===== */
+        .floor--moving {
+            will-change: transform;
+            transform: translateZ(0);
+            contain: layout style paint;
+        }
+
+        .crane--moving {
+            will-change: transform;
+            transform: translateZ(0);
+            contain: layout style paint;
+        }
+
+        /* CSS Containment для изоляции рендеринга */
+        .floor {
+            contain: layout style paint;
+        }
+
+        .cloud {
+            contain: layout style paint;
+        }
+
+        .crane {
+            contain: layout style paint;
+        }
+
+        .game-area {
+            contain: layout;
+        }
+
+        .foundation.animated,
+        .road.animated {
+            transition: bottom 0.3s ease-out;
+        }
+
+        .game__background.animated {
+            transition: bottom 0.3s ease-out;
+        }
+
+        /* ===== OVERLAY ===== */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(35, 35, 35, 0.8);
+            z-index: 25;
+            display: none;
+        }
+
+        .overlay--visible {
+            display: block;
+        }
+
+
+        /* ===== MODAL ===== */
+        .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            display: none;
+        }
+
+        .modal--visible {
+            display: flex;
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #F4F5F8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .loading-screen__icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            background: url('./assets/icons/crane.svg') no-repeat center/contain;
+        }
+
+        .loading-screen__title {
+            font-family: 'StranaFont', sans-serif;
+            font-size: 50px;
+            font-weight: 400;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: #313541;
+            margin-bottom: 30px;
+        }
+
+        .loading-screen__title-accent {
+            color: #951B81;
+        }
+
+        .loading-screen__progress {
+            width: 400px;
+            max-width: 80%;
+            height: 8px;
+            background: #E0E0E0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .loading-screen__progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #951B81, #C6168D);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-screen__text {
+            font-family: 'Circe', sans-serif;
+            font-size: 20px;
+            color: #313541;
+            margin-bottom: 10px;
+        }
+
+        .loading-screen__percentage {
+            font-family: 'StranaFont', sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: #951B81;
+        }
+
+        /* ===== START MODAL ===== */
+        .start-modal {
+            width: 674px;
+            height: 548px;
+            background: #F4F5F8;
+            padding: 44px;
+            border-radius: 10px;
+            flex-direction: column;
+            justify-content: space-between;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 40px);
+        }
+
+        .start-modal__header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .start-modal__icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            background: url('./assets/icons/crane.svg') no-repeat center/contain;
+        }
+
+        .start-modal__title {
+            font-family: 'StranaFont', sans-serif;
+            font-size: 50px;
+            font-weight: 400;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: #313541;
+            margin: 0;
+        }
+
+        .start-modal__title-accent {
+            color: #951B81;
+        }
+
+        .start-modal__description {
+            font-family: 'Circe', sans-serif;
+            font-size: 20px;
+            line-height: 1.3;
+            color: #313541;
+            margin-top: 26px;
+        }
+
+        .start-modal__description-accent {
+            color: #951B81;
+        }
+
+        .start-modal__footer {
+            align-self: flex-start;
+        }
+
+        /* ===== ADAPTIVE STYLES ===== */
+        @media (max-width: 767px) {
+            .loading-screen__icon {
+                margin-bottom: 0;
+            }
+
+            .loading-screen__title {
+                font-size: 32px;
+                margin-bottom: 25px;
+            }
+
+            .loading-screen__progress {
+                width: 300px;
+            }
+
+            .loading-screen__text {
+                font-size: 16px;
+            }
+
+            .loading-screen__percentage {
+                font-size: 16px;
+            }
+
+            .start-modal {
+                width: 90vw;
+                height: auto;
+                min-height: 400px;
+                padding: 24px;
+                flex-direction: column;
+                justify-content: flex-start;
+                gap: 24px;
+            }
+
+            .start-modal__header {
+                align-items: center;
+                text-align: center;
+                gap: 16px;
+            }
+
+            .start-modal__icon {
+                margin-bottom: 0;
+                align-self: center;
+            }
+
+            .start-modal__title {
+                font-size: 32px;
+            }
+
+            .start-modal__description {
+                font-size: 16px;
+                margin-top: 0;
+                text-align: center;
+            }
+
+            .start-modal__footer {
+                align-self: center;
+                margin-top: auto;
+            }
+
+            .btn--primary {
+                width: 200px;
+                height: 55px;
+                font-size: 12px;
+                letter-spacing: 3px;
+            }
+
+            .score {
+                font-size: 20px;
+                top: 15px;
+            }
+        }
+
+        /* ===== BUTTON ===== */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 10px;
+            font-family: 'StranaFont', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn--primary {
+            width: 226px;
+            height: 65px;
+            background: #951B81;
+            color: white;
+        }
+
+        .btn--primary:hover {
+            background: #821a7f;
+        }
+    </style>
+</head>
+<body class="page">
+    <div class="game">
+        <!-- Background -->
+        <div class="game__background js-buildings"></div>
+
+        <!-- Clouds -->
+        <div class="clouds js-clouds">
+            <div class="cloud cloud--1"></div>
+            <div class="cloud cloud--2"></div>
+            <div class="cloud cloud--3"></div>
+            <div class="cloud cloud--4"></div>
+        </div>
+        
+        <!-- Score -->
+        <div class="score js-score">ЭТАЖЕЙ: 0</div>
+
+        <!-- Game Area -->
+        <div class="game-area js-game-area">
+            <div class="road js-road"></div>
+            <div class="foundation js-foundation"></div>
+            <div class="crane js-crane"></div>
+        </div>
+        
+        <!-- Loading Screen -->
+        <div class="loading-screen js-loading-screen">
+            <div class="loading-screen__icon"></div>
+            <h1 class="loading-screen__title">
+                ЗАГРУЗКА<br>
+                <span class="loading-screen__title-accent">ИГРЫ</span>
+            </h1>
+            <div class="loading-screen__progress">
+                <div class="loading-screen__progress-bar js-progress-bar"></div>
+            </div>
+            <div class="loading-screen__text js-loading-text">Загружаем ресурсы...</div>
+            <div class="loading-screen__percentage js-loading-percentage">0%</div>
+        </div>
+        
+        <!-- Overlay -->
+        <div class="overlay js-overlay"></div>
+
+        <!-- Start Modal -->
+        <div class="modal start-modal js-start-modal">
+            <div class="start-modal__header">
+                <div class="start-modal__icon"></div>
+                <h1 class="start-modal__title">
+                    СТРОИТЕЛЬ<br>
+                    <span class="start-modal__title-accent">НЕБОСКРЁБА</span>
+                </h1>
+                <p class="start-modal__description">
+                    Стройте небоскрёб и выигрывайте бонусы.<br>
+                    Чем выше небоскрёб, тем <span class="start-modal__description-accent">больше приз!</span>
+                </p>
+            </div>
+            <div class="start-modal__footer">
+                <button class="btn btn--primary js-start-btn">НАЧАТЬ ИГРУ</button>
+            </div>
+        </div>
+
+        <!-- Audio -->
+        <audio class="js-tap-sound" preload="auto">
+            <source src="./assets/sounds/tap.mp3" type="audio/mpeg">
+        </audio>
+        <audio class="js-background-music" preload="auto" loop>
+            <source src="./assets/sounds/background.mp3" type="audio/mpeg">
+        </audio>
+        <audio class="js-game-over-sound" preload="auto">
+            <source src="./assets/sounds/game-over.mp3" type="audio/mpeg">
+        </audio>
+        <audio class="js-place-sound" preload="auto">
+            <source src="./assets/sounds/place.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script>
+        class TowerGame {
+            constructor() {
+                this.initElements();
+                this.initConfig();
+                this.initEvents();
+                // Инициализируем аудиосистему и запускаем предзагрузку ресурсов
+                this.audioSystem.init();
+                this.preloadResources();
+            }
+
+            initElements() {
+                this.elements = {
+                    gameArea: document.querySelector('.js-game-area'),
+                    score: document.querySelector('.js-score'),
+                    startModal: document.querySelector('.js-start-modal'),
+                    startBtn: document.querySelector('.js-start-btn'),
+                    foundation: document.querySelector('.js-foundation'),
+                    road: document.querySelector('.js-road'),
+                    crane: document.querySelector('.js-crane'),
+                    overlay: document.querySelector('.js-overlay'),
+                    buildings: document.querySelector('.js-buildings'),
+                    clouds: document.querySelector('.js-clouds'),
+                    loadingScreen: document.querySelector('.js-loading-screen'),
+                    progressBar: document.querySelector('.js-progress-bar'),
+                    loadingText: document.querySelector('.js-loading-text'),
+                    loadingPercentage: document.querySelector('.js-loading-percentage')
+                };
+
+                this.audio = {
+                    tapSound: document.querySelector('.js-tap-sound'),
+                    backgroundMusic: document.querySelector('.js-background-music'),
+                    gameOverSound: document.querySelector('.js-game-over-sound'),
+                    placeSound: document.querySelector('.js-place-sound')
+                };
+            }
+
+            initConfig() {
+                this.config = {
+                    FLOOR_HEIGHT: 46,
+                    INITIAL_FLOOR_WIDTH: 300,
+                    GAME_WIDTH: 815,
+                    FOUNDATION_BOTTOM: 163,
+                    CRANE_OFFSET: 774.5,
+                    CRANE_HEIGHT: 160,
+                    CLOUD_IMAGES: ['cloud1.svg', 'cloud2.svg', 'cloud3.svg', 'cloud4.svg'],
+                    CLOUD_SPAWN_HEIGHT: -200,
+                    // УПРОЩЕННАЯ система скорости
+                    FLOOR_SPEED_PPS: 120 // Пиксели в секунду
+                };
+
+
+                this.gameState = {
+                    score: 0,
+                    currentFloor: null,
+                    lastFloorWidth: 0,
+                    lastFloorX: 0,
+                    gameActive: false,
+                    isPaused: false,
+                    pausedByVisibility: false,
+                    floors: [],
+                    animationId: null,
+                    floorPosition: 0,
+                    floorDirection: 1,
+                    floorSpeed: 1.5,
+                // УПРОЩЕННАЯ система времени
+                lastFrameTime: 0,
+                // КЭШИРОВАНИЕ для transform операций (оптимизация рендера)
+                lastBlockRenderX: null,
+                lastCraneRenderX: null,
+                lastCraneRenderY: null,
+                // ОПТИМИЗАЦИЯ игрового цикла - отслеживание последних позиций
+                lastUpdateTime: 0,
+                needsRender: false
+                };
+
+                // УПРОЩЕННАЯ система логических объектов
+                this.entities = {
+                    movingBlock: {
+                        x: 0.0,
+                        y: 0.0,
+                        width: 0,
+                        height: this.config.FLOOR_HEIGHT,
+                        velocityPPS: this.config.FLOOR_SPEED_PPS, // Пиксели в секунду
+                        direction: 1,
+                        active: false,
+                        // ОПТИМИЗАЦИЯ: отслеживание последней обновленной позиции
+                        lastUpdatePosition: 0
+                    },
+                    crane: {
+                        x: 0.0,
+                        y: 0.0,
+                        offsetX: this.config.CRANE_OFFSET,
+                        offsetY: this.config.CRANE_HEIGHT,
+                        visible: false
+                    }
+                };
+
+                this.updateGameDimensions();
+                this.initObjectPools();
+                this.initDirectRenderer();
+                this.initAudioSystem();
+            }
+
+            // Система Web Audio API для оптимизации звука
+            initAudioSystem() {
+                this.audioSystem = {
+                    context: null,
+                    buffers: new Map(),
+                    sources: [],
+                    gainNode: null,
+                    initialized: false,
+                    
+                    // Инициализация Web Audio Context
+                    async init() {
+                        try {
+                            this.context = new (window.AudioContext || window.webkitAudioContext)();
+                            this.gainNode = this.context.createGain();
+                            this.gainNode.connect(this.context.destination);
+                            this.gainNode.gain.value = 0.7; // Общая громкость
+                            this.initialized = true;
+                        } catch (error) {
+                            console.warn('Web Audio API not supported, falling back to HTML Audio');
+                            this.initialized = false;
+                        }
+                    },
+                    
+                    // Загрузка и декодирование аудио буфера
+                    async loadSound(url, name) {
+                        if (!this.initialized) return null;
+                        
+                        try {
+                            const response = await fetch(url);
+                            const arrayBuffer = await response.arrayBuffer();
+                            const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
+                            this.buffers.set(name, audioBuffer);
+                            return audioBuffer;
+                        } catch (error) {
+                            console.warn(`Failed to load sound ${name}:`, error);
+                            return null;
+                        }
+                    },
+                    
+                    // Воспроизведение звука
+                    playSound(name, options = {}) {
+                        if (!this.initialized || !this.buffers.has(name)) {
+                            return this.fallbackPlay(name);
+                        }
+                        
+                        try {
+                            const buffer = this.buffers.get(name);
+                            const source = this.context.createBufferSource();
+                            const gainNode = this.context.createGain();
+                            
+                            source.buffer = buffer;
+                            source.connect(gainNode);
+                            gainNode.connect(this.gainNode);
+                            
+                            // Настройки звука
+                            gainNode.gain.value = options.volume || 1.0;
+                            source.loop = options.loop || false;
+                            
+                            // Запуск
+                            source.start(0);
+                            
+                            // Автоочистка
+                            source.onended = () => {
+                                source.disconnect();
+                                gainNode.disconnect();
+                            };
+                            
+                            this.sources.push(source);
+                            return source;
+                        } catch (error) {
+                            console.warn(`Failed to play sound ${name}:`, error);
+                            return this.fallbackPlay(name);
+                        }
+                    },
+                    
+                    // Fallback на HTML Audio
+                    fallbackPlay(name) {
+                        const audio = document.querySelector(`.js-${name.replace('Sound', '')}-sound`);
+                        if (audio) {
+                            audio.currentTime = 0;
+                            audio.play().catch(e => console.log(`Could not play ${name}:`, e));
+                        }
+                    },
+                    
+                    // Остановка всех звуков
+                    stopAll() {
+                        this.sources.forEach(source => {
+                            try {
+                                source.stop();
+                                source.disconnect();
+                            } catch (e) {
+                                // Источник уже остановлен
+                            }
+                        });
+                        this.sources = [];
+                    }
+                };
+            }
+
+            // УПРОЩЕННАЯ система прямых DOM операций (убираем батчинг - он создает больше overhead'а)
+            initDirectRenderer() {
+                this.directRenderer = {
+                    // Прямая установка стилей без батчинга
+                    setStyle(element, property, value) {
+                        if (element && element.style) {
+                            element.style[property] = value;
+                        }
+                    },
+                    
+                    // Установка нескольких стилей за раз
+                    setStyles(element, styles) {
+                        if (element && element.style) {
+                            Object.assign(element.style, styles);
+                        }
+                    },
+                    
+                    // Оптимизированная установка transform (самая частая операция)
+                    setTransform(element, x, y, scaleX = 1, scaleY = 1, rotation = 0) {
+                        if (element && element.style) {
+                            element.style.transform = `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`;
+                        }
+                    },
+                    
+                    // Быстрая установка позиции через transform
+                    setPosition(element, x, y) {
+                        if (element && element.style) {
+                            element.style.transform = `translate(${x}px, ${y}px)`;
+                        }
+                    }
+                };
+            }
+
+            // УПРОЩЕННАЯ система пулов - минимум DOM операций для максимальной производительности
+            initObjectPools() {
+                this.objectPools = {
+                    floors: {
+                        pool: [],
+                        maxSize: 20,
+                        
+                        get() {
+                            return this.pool.length > 0 ? this.pool.pop() : this.create();
+                        },
+                        
+                        return(floor) {
+                            if (this.pool.length < this.maxSize && floor) {
+                                // ТОЛЬКО критические сбросы - остальное установится при использовании
+                                floor.style.display = 'none';
+                                floor.className = 'floor';
+                                this.pool.push(floor);
+                            } else if (floor?.parentNode) {
+                                floor.parentNode.removeChild(floor);
+                            }
+                        },
+                        
+                        create() {
+                            const floor = document.createElement('div');
+                            floor.className = 'floor';
+                            return floor;
+                        }
+                    },
+                    
+                    clouds: {
+                        pool: [],
+                        maxSize: 10,
+                        
+                        get() {
+                            return this.pool.length > 0 ? this.pool.pop() : this.create();
+                        },
+                        
+                        return(cloud) {
+                            if (this.pool.length < this.maxSize && cloud) {
+                                // ТОЛЬКО критические сбросы
+                                cloud.style.display = 'none';
+                                cloud.style.animation = 'none';
+                                cloud.className = 'cloud';
+                                this.pool.push(cloud);
+                            } else if (cloud?.parentNode) {
+                                cloud.parentNode.removeChild(cloud);
+                            }
+                        },
+                        
+                        create() {
+                            const cloud = document.createElement('div');
+                            cloud.className = 'cloud';
+                            return cloud;
+                        }
+                    },
+                    
+                    cutParts: {
+                        pool: [],
+                        maxSize: 15,
+                        
+                        get() {
+                            return this.pool.length > 0 ? this.pool.pop() : this.create();
+                        },
+                        
+                        return(part) {
+                            if (this.pool.length < this.maxSize && part) {
+                                // ТОЛЬКО критические сбросы
+                                part.style.display = 'none';
+                                part.className = 'floor';
+                                this.pool.push(part);
+                            } else if (part?.parentNode) {
+                                part.parentNode.removeChild(part);
+                            }
+                        },
+                        
+                        create() {
+                            const part = document.createElement('div');
+                            part.className = 'floor';
+                            return part;
+                        }
+                    }
+                };
+            }
+
+            initEvents() {
+                this.elements.startBtn.addEventListener('click', () => this.startGame());
+                this.elements.gameArea.addEventListener('click', () => this.placeFloor());
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.placeFloor();
+                    }
+                });
+                this.elements.gameArea.addEventListener('selectstart', (e) => e.preventDefault());
+                
+                window.addEventListener('resize', () => {
+                    if (this.gameState.gameActive) {
+                        this.gameOver();
+                    } else {
+                        this.updateGameDimensions();
+                    }
+                });
+
+                // Обработка видимости вкладки для автопаузы
+                document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+                window.addEventListener('blur', () => this.pauseGame());
+                window.addEventListener('focus', () => this.resumeGame());
+            }
+
+            updateGameDimensions() {
+                const gameElement = document.querySelector('.game');
+                if (!gameElement) return;
+
+                const rect = gameElement.getBoundingClientRect();
+                const scale = rect.width / this.config.GAME_WIDTH;
+                
+                this.gameDimensions = {
+                    width: rect.width,
+                    height: rect.height,
+                    scale: scale,
+                    floorHeight: this.config.FLOOR_HEIGHT,
+                    initialFloorWidth: this.config.INITIAL_FLOOR_WIDTH,
+                    foundationBottom: this.config.FOUNDATION_BOTTOM * scale,
+                    craneOffset: this.config.CRANE_OFFSET * scale,
+                    craneHeight: this.config.CRANE_HEIGHT * scale
+                };
+
+                if (this.gameState.lastFloorWidth === 0) {
+                    this.gameState.lastFloorWidth = this.gameDimensions.initialFloorWidth;
+                    this.gameState.lastFloorX = this.gameDimensions.width / 2;
+                    this.gameState.floorPosition = -this.gameDimensions.initialFloorWidth;
+                }
+            }
+
+            // Система предзагрузки ресурсов
+            async preloadResources() {
+                // Список всех ресурсов для предзагрузки (шрифты предзагружаются через HTML preload)
+                const resources = {
+                    images: [
+                        './assets/images/background-buildings.svg',
+                        './assets/images/background-image.png',
+                        './assets/images/block.svg',
+                        './assets/images/cloud1.svg',
+                        './assets/images/cloud2.svg',
+                        './assets/images/cloud3.svg',
+                        './assets/images/cloud4.svg',
+                        './assets/images/crane.svg',
+                        './assets/images/foundation.svg',
+                        './assets/images/road.svg',
+                        './assets/icons/crane.svg'
+                    ],
+                    audio: [
+                        './assets/sounds/background.mp3',
+                        './assets/sounds/game-over.mp3',
+                        './assets/sounds/place.mp3',
+                        './assets/sounds/tap.mp3'
+                    ]
+                };
+
+                const totalResources = resources.images.length + resources.audio.length;
+                let loadedResources = 0;
+
+                const updateProgress = () => {
+                    const progress = Math.round((loadedResources / totalResources) * 100);
+                    this.updateLoadingProgress(progress, loadedResources, totalResources);
+                };
+
+                try {
+                    // Предзагрузка изображений
+                    const imagePromises = resources.images.map(src => {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                loadedResources++;
+                                updateProgress();
+                                resolve(img);
+                            };
+                            img.onerror = () => {
+                                console.warn(`Failed to load image: ${src}`);
+                                loadedResources++;
+                                updateProgress();
+                                resolve(null);
+                            };
+                            img.src = src;
+                        });
+                    });
+
+                    // Предзагрузка аудио
+                    const audioPromises = resources.audio.map(src => {
+                        return new Promise((resolve) => {
+                            const audio = new Audio();
+                            audio.oncanplaythrough = () => {
+                                loadedResources++;
+                                updateProgress();
+                                resolve(audio);
+                            };
+                            audio.onerror = () => {
+                                console.warn(`Failed to load audio: ${src}`);
+                                loadedResources++;
+                                updateProgress();
+                                resolve(null);
+                            };
+                            audio.src = src;
+                        });
+                    });
+
+                    // Ждем загрузки всех ресурсов
+                    await Promise.all([...imagePromises, ...audioPromises]);
+                    
+                    // Небольшая задержка для плавности UI
+                    setTimeout(() => {
+                        this.hideLoadingModal();
+                        this.showStartModal();
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Preloading failed:', error);
+                    this.handleLoadingError(error);
+                }
+            }
+
+            // Обновление прогресса загрузки
+            updateLoadingProgress(percentage, loaded, total) {
+                if (this.elements.progressBar) {
+                    this.elements.progressBar.style.width = `${percentage}%`;
+                }
+                
+                if (this.elements.loadingPercentage) {
+                    this.elements.loadingPercentage.textContent = `${percentage}%`;
+                }
+                
+                if (this.elements.loadingText) {
+                    if (percentage < 60) {
+                        this.elements.loadingText.textContent = 'Загружаем изображения...';
+                    } else if (percentage < 90) {
+                        this.elements.loadingText.textContent = 'Загружаем звуки...';
+                    } else {
+                        this.elements.loadingText.textContent = 'Почти готово...';
+                    }
+                }
+            }
+
+            // Скрытие загрузочного экрана
+            hideLoadingModal() {
+                if (this.elements.loadingScreen) {
+                    this.elements.loadingScreen.style.display = 'none';
+                }
+            }
+
+            // Обработка ошибок загрузки
+            handleLoadingError(error) {
+                if (this.elements.loadingText) {
+                    this.elements.loadingText.textContent = 'Ошибка загрузки, но игра все равно готова!';
+                }
+                
+                if (this.elements.loadingPercentage) {
+                    this.elements.loadingPercentage.textContent = '⚠️';
+                }
+
+                // Показываем игру через 2 секунды даже при ошибках
+                setTimeout(() => {
+                    this.hideLoadingModal();
+                    this.showStartModal();
+                }, 2000);
+            }
+
+            // Обработка видимости вкладки
+            handleVisibilityChange() {
+                if (document.hidden) {
+                    this.pauseGame();
+                } else {
+                    this.resumeGame();
+                }
+            }
+
+            // Постановка игры на паузу
+            pauseGame() {
+                if (!this.gameState.gameActive || this.gameState.isPaused) return;
+                
+                this.gameState.isPaused = true;
+                this.gameState.pausedByVisibility = true;
+                
+                // Останавливаем анимацию
+                if (this.gameState.animationId) {
+                    cancelAnimationFrame(this.gameState.animationId);
+                    this.gameState.animationId = null;
+                }
+                
+                // Приостанавливаем аудио
+                if (this.audio.backgroundMusic && !this.audio.backgroundMusic.paused) {
+                    this.audio.backgroundMusic.pause();
+                }
+            }
+
+            // Возобновление игры
+            resumeGame() {
+                if (!this.gameState.gameActive || !this.gameState.isPaused || !this.gameState.pausedByVisibility) return;
+                
+                this.gameState.isPaused = false;
+                this.gameState.pausedByVisibility = false;
+                
+                // Сбрасываем время для корректного deltaTime после паузы
+                this.gameState.lastFrameTime = 0;
+                this.gameState.lastUpdateTime = 0;
+                
+                // Возобновляем анимацию если есть текущий этаж
+                if (this.gameState.currentFloor) {
+                    this.animateFloor();
+                }
+                
+                // Возобновляем аудио если оно было включено
+                if (this.audio.backgroundMusic && this.gameState.gameActive) {
+                    this.audio.backgroundMusic.play().catch(e => console.log('Could not resume background music:', e));
+                }
+            }
+
+
+            playTapSound() {
+                // ОПТИМИЗАЦИЯ: Используем Web Audio API или fallback
+                this.audioSystem.playSound('tapSound');
+            }
+
+            playBackgroundMusic() {
+                try {
+                    this.audio.backgroundMusic.currentTime = 0;
+                    this.audio.backgroundMusic.play().catch(e => console.log('Could not play background music:', e));
+                } catch (e) {
+                    console.log('Background music error:', e);
+                }
+            }
+
+            stopBackgroundMusic() {
+                try {
+                    this.audio.backgroundMusic.pause();
+                    this.audio.backgroundMusic.currentTime = 0;
+                } catch (e) {
+                    console.log('Stop background music error:', e);
+                }
+            }
+
+            playGameOverSound() {
+                try {
+                    this.audio.gameOverSound.currentTime = 0;
+                    this.audio.gameOverSound.play().catch(e => console.log('Could not play game over sound:', e));
+                } catch (e) {
+                    console.log('Game over sound error:', e);
+                }
+            }
+
+            playPlaceSound() {
+                // ОПТИМИЗАЦИЯ: Используем Web Audio API или fallback
+                this.audioSystem.playSound('placeSound');
+            }
+
+            startGame() {
+                this.playTapSound();
+                this.updateGameDimensions();
+                this.gameState.score = 0;
+                this.gameState.lastFloorWidth = this.config.INITIAL_FLOOR_WIDTH;
+                this.gameState.lastFloorX = this.gameDimensions.width / 2;
+                this.gameState.gameActive = true;
+                this.gameState.isPaused = false;
+                this.gameState.pausedByVisibility = false;
+                this.gameState.floors = [];
+                this.gameState.floorSpeed = 1.5;
+                this.gameState.cameraLevel = 0;
+                this.gameState.isPlacing = false;
+                this.gameState.floorPosition = -this.config.INITIAL_FLOOR_WIDTH;
+                this.gameState.lastFrameTime = 0;
+                // Сбрасываем кэш рендера и оптимизации
+                this.gameState.lastBlockRenderX = null;
+                this.gameState.lastCraneRenderX = null;
+                this.gameState.lastCraneRenderY = null;
+                this.gameState.lastUpdateTime = 0;
+                this.gameState.needsRender = false;
+                this.initializeCrane();
+                this.hideStartModal();
+                this.playBackgroundMusic();
+                this.updateScore();
+                this.createFloor();
+            }
+
+            hideStartModal() {
+                this.elements.startModal.classList.remove('modal--visible');
+                this.elements.overlay.classList.remove('overlay--visible');
+            }
+
+            showStartModal() {
+                this.elements.startModal.classList.add('modal--visible');
+                this.elements.overlay.classList.add('overlay--visible');
+            }
+
+            clearGameArea() {
+                // ОПТИМИЗАЦИЯ: Возвращаем элементы в пулы вместо удаления
+                const floors = this.elements.gameArea.querySelectorAll('.floor');
+                floors.forEach(floor => {
+                    if (floor.parentNode) {
+                        floor.parentNode.removeChild(floor);
+                    }
+                    this.objectPools.floors.return(floor);
+                });
+                
+                const fallingParts = this.elements.gameArea.querySelectorAll('.floor--falling');
+                fallingParts.forEach(part => {
+                    if (part.parentNode) {
+                        part.parentNode.removeChild(part);
+                    }
+                    this.objectPools.cutParts.return(part);
+                });
+                
+                const dynamicClouds = this.elements.clouds.querySelectorAll('.cloud--dynamic');
+                dynamicClouds.forEach(cloud => {
+                    if (cloud.parentNode) {
+                        cloud.parentNode.removeChild(cloud);
+                    }
+                    this.objectPools.clouds.return(cloud);
+                });
+            }
+
+            resetElementPositions() {
+                this.elements.foundation.style.bottom = '43px';
+                this.elements.foundation.classList.remove('animated');
+                
+                this.elements.road.style.bottom = '0px';
+                this.elements.road.classList.remove('animated');
+                
+                this.elements.buildings.style.bottom = '0px';
+                this.elements.buildings.classList.remove('animated');
+            }
+
+            initializeCrane() {
+                // Инициализируем логические данные крана
+                this.entities.crane.x = this.gameState.lastFloorX - this.config.CRANE_OFFSET;
+                this.entities.crane.y = this.gameDimensions.height - this.config.FOUNDATION_BOTTOM - this.config.FLOOR_HEIGHT - this.config.CRANE_HEIGHT;
+                this.entities.crane.visible = false;
+                
+                // Применяем к DOM через оптимизированный рендерер
+                this.elements.crane.style.left = '0px'; // Базовая позиция
+                this.elements.crane.style.top = '0px';  // Базовая позиция
+                this.directRenderer.setPosition(this.elements.crane, this.entities.crane.x, this.entities.crane.y);
+                this.elements.crane.style.opacity = '0';
+            }
+
+            createFloor() {
+                // ОПТИМИЗАЦИЯ: Используем пул вместо создания нового элемента
+                const floor = this.objectPools.floors.get();
+                // Настраиваем элемент (пул возвращает "чистый" элемент)
+                floor.className = 'floor floor--moving';
+                floor.style.display = 'block';
+                floor.style.width = `${this.gameState.lastFloorWidth}px`;
+                floor.style.height = `${this.gameDimensions.floorHeight}px`;
+                
+                const bottomPosition = this.calculateFloorPosition();
+                floor.style.bottom = `${bottomPosition}px`;
+                floor.style.left = '0px'; // Базовая позиция, используем transform для движения
+                this.directRenderer.setPosition(floor, -this.config.INITIAL_FLOOR_WIDTH, 0);
+                
+                this.elements.gameArea.appendChild(floor);
+                this.gameState.currentFloor = floor;
+                this.gameState.floors.push(floor);
+                
+                // Инициализируем логические объекты с новой системой
+                this.entities.movingBlock.x = -this.config.INITIAL_FLOOR_WIDTH;
+                this.entities.movingBlock.y = bottomPosition;
+                this.entities.movingBlock.previousX = -this.config.INITIAL_FLOOR_WIDTH;
+                this.entities.movingBlock.previousY = bottomPosition;
+                this.entities.movingBlock.width = this.gameState.lastFloorWidth;
+                this.entities.movingBlock.velocityPPS = this.config.FLOOR_SPEED_PPS + (this.gameState.score * 8); // Увеличиваем скорость
+                this.entities.movingBlock.direction = 1;
+                this.entities.movingBlock.active = true;
+                // ОПТИМИЗАЦИЯ: инициализируем отслеживание позиции
+                this.entities.movingBlock.lastUpdatePosition = -this.config.INITIAL_FLOOR_WIDTH;
+                
+                // Инициализируем кран с новой системой
+                this.entities.crane.visible = true;
+                this.entities.crane.x = this.entities.movingBlock.x + (this.entities.movingBlock.width / 2) - this.entities.crane.offsetX;
+                this.entities.crane.y = this.gameDimensions.height - this.entities.movingBlock.y - this.entities.crane.offsetY;
+                
+                // Сбрасываем старые данные для новой системы
+                this.gameState.floorPosition = -this.config.INITIAL_FLOOR_WIDTH;
+                this.gameState.floorDirection = 1;
+                this.gameState.lastFrameTime = 0; // Сбрасываем время
+                this.gameState.lastUpdateTime = 0; // Сбрасываем время обновления
+                this.gameState.needsRender = true; // Принудительно рендерим новый блок
+                
+                this.showCrane();
+                this.animateFloor();
+            }
+
+            calculateFloorPosition() {
+                let bottomPosition = this.config.FOUNDATION_BOTTOM + 1;
+                
+                if (this.gameState.floors.length > 0) {
+                    let maxBottom = -1;
+                    this.gameState.floors.forEach(floor => {
+                        if (floor) {
+                            const bottom = parseFloat(floor.style.bottom);
+                    if (bottom > maxBottom) {
+                        maxBottom = bottom;
+                            }
+                    }
+                });
+                
+                if (maxBottom > -1) {
+                        bottomPosition = maxBottom + this.config.FLOOR_HEIGHT + 1;
+                    }
+                }
+                
+                return bottomPosition;
+            }
+
+            // КРИТИЧЕСКИ ОПТИМИЗИРОВАННЫЙ метод: обновление только при значимых изменениях
+            updateAndRender(deltaTime) {
+                if (!this.entities.movingBlock.active) return;
+                
+                // Вычисляем движение в пикселях за это время (deltaTime в миллисекундах)
+                const deltaSeconds = deltaTime / 1000;
+                const movement = this.entities.movingBlock.velocityPPS * deltaSeconds * this.entities.movingBlock.direction;
+                
+                // Обновляем позицию
+                const newX = this.entities.movingBlock.x + movement;
+                
+                // ПРОСТАЯ обработка границ (достаточно для игры)
+                const minX = -this.config.INITIAL_FLOOR_WIDTH;
+                const maxX = this.gameDimensions.width - this.entities.movingBlock.width;
+                
+                if (newX > maxX) {
+                    this.entities.movingBlock.x = maxX;
+                    this.entities.movingBlock.direction = -1;
+                    this.gameState.needsRender = true;
+                } else if (newX < minX) {
+                    this.entities.movingBlock.x = minX;
+                    this.entities.movingBlock.direction = 1;
+                    this.gameState.needsRender = true;
+                } else {
+                    this.entities.movingBlock.x = newX;
+                }
+                
+                // КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ: проверка минимального движения (0.5 пикселя)
+                const MOVEMENT_THRESHOLD = 0.5;
+                const positionChange = Math.abs(this.entities.movingBlock.lastUpdatePosition - this.entities.movingBlock.x);
+                
+                if (positionChange >= MOVEMENT_THRESHOLD) {
+                    this.entities.movingBlock.lastUpdatePosition = this.entities.movingBlock.x;
+                    this.gameState.needsRender = true;
+                }
+                
+                // Рендер блока только при необходимости
+                if (this.gameState.needsRender && this.gameState.currentFloor) {
+                    const renderX = Math.round(this.entities.movingBlock.x);
+                    if (this.gameState.lastBlockRenderX !== renderX) {
+                        this.directRenderer.setPosition(this.gameState.currentFloor, renderX, 0);
+                        this.gameState.lastBlockRenderX = renderX;
+                    }
+                    
+                    // Обновляем и рендерим кран синхронно
+                    if (this.entities.crane.visible) {
+                        this.entities.crane.x = this.entities.movingBlock.x + (this.entities.movingBlock.width / 2) - this.entities.crane.offsetX;
+                        const blockTopPosition = this.entities.movingBlock.y + this.config.FLOOR_HEIGHT;
+                        this.entities.crane.y = this.gameDimensions.height - blockTopPosition - this.entities.crane.offsetY;
+                        
+                        const craneRenderX = Math.round(this.entities.crane.x);
+                        const craneRenderY = Math.round(this.entities.crane.y);
+                        
+                        if (this.gameState.lastCraneRenderX !== craneRenderX || this.gameState.lastCraneRenderY !== craneRenderY) {
+                            this.elements.crane.style.transition = 'none';
+                            this.elements.crane.classList.add('crane--moving');
+                            
+                            this.directRenderer.setPosition(this.elements.crane, craneRenderX, craneRenderY);
+                            this.gameState.lastCraneRenderX = craneRenderX;
+                            this.gameState.lastCraneRenderY = craneRenderY;
+                        }
+                    }
+                    
+                    // Сбрасываем флаг рендера
+                    this.gameState.needsRender = false;
+                }
+            }
+
+            // КРИТИЧЕСКИ ОПТИМИЗИРОВАННЫЙ игровой цикл: минимум вызовов RAF, умная проверка необходимости обновления
+            animateFloor(currentTime = 0) {
+                // Проверяем состояние игры в начале каждого кадра
+                if (!this.gameState.currentFloor || !this.gameState.gameActive || this.gameState.isPaused) {
+                    // Очищаем animationId при остановке
+                    this.gameState.animationId = null;
+                    return;
+                }
+                
+                // Инициализация времени
+                if (this.gameState.lastFrameTime === 0) {
+                    this.gameState.lastFrameTime = currentTime;
+                    this.gameState.lastUpdateTime = currentTime;
+                    this.gameState.animationId = requestAnimationFrame((time) => this.animateFloor(time));
+                    return;
+                }
+                
+                // КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ: минимальный интервал обновления (60 FPS = 16.67ms)
+                const UPDATE_INTERVAL = 16.67; // 60 FPS
+                const timeSinceLastUpdate = currentTime - this.gameState.lastUpdateTime;
+                
+                if (timeSinceLastUpdate >= UPDATE_INTERVAL) {
+                    // Вычисляем deltaTime с защитой от больших скачков
+                    const deltaTime = Math.min(currentTime - this.gameState.lastFrameTime, 33); // Макс 30 FPS защита
+                    this.gameState.lastFrameTime = currentTime;
+                    this.gameState.lastUpdateTime = currentTime;
+                    
+                    // Обновляем логику И рендер за один проход (эффективнее)
+                    this.updateAndRender(deltaTime);
+                }
+                
+                // КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ: продолжаем цикл только если игра все еще активна
+                if (this.gameState.gameActive && !this.gameState.isPaused && this.gameState.currentFloor) {
+                    this.gameState.animationId = requestAnimationFrame((time) => this.animateFloor(time));
+                } else {
+                    // Игра неактивна - останавливаем цикл
+                    this.gameState.animationId = null;
+                }
+            }
+
+            placeFloor() {
+                if (!this.gameState.currentFloor || !this.gameState.gameActive || this.gameState.isPlacing || this.gameState.isPaused) return;
+
+                this.gameState.isPlacing = true;
+
+                if (this.gameState.animationId) {
+                    cancelAnimationFrame(this.gameState.animationId);
+                    this.gameState.animationId = null;
+                }
+
+                // Деактивируем движущийся блок
+                this.entities.movingBlock.active = false;
+
+                // Используем данные из логических объектов вместо DOM
+                const currentX = this.entities.movingBlock.x;
+                const { prevFloorLeft, prevFloorRight } = this.getPreviousFloorBounds();
+                const { overlapLeft, overlapRight, overlapWidth } = this.calculateOverlap(currentX, prevFloorLeft, prevFloorRight);
+
+                if (overlapWidth <= 10) {
+                    this.gameOver();
+                    this.animateFall(this.gameState.currentFloor);
+                    return;
+                }
+
+                this.playPlaceSound();
+                const originalFloorWidth = this.gameState.lastFloorWidth;
+                this.placeFloorAtPosition(overlapLeft, overlapWidth);
+                this.updateGameState(overlapLeft, overlapWidth);
+                this.handleCutParts(currentX, prevFloorLeft, prevFloorRight, originalFloorWidth);
+                
+                // Убираем updateCranePosition() - кран обновляется автоматически в updateLogic()
+                
+                this.craneExitAndReturn();
+            }
+
+            getPreviousFloorBounds() {
+                if (this.gameState.score === 0) {
+                    const foundationCenter = this.gameDimensions.width / 2;
+                    const foundationWidth = this.config.INITIAL_FLOOR_WIDTH;
+                    return {
+                        prevFloorLeft: foundationCenter - foundationWidth / 2,
+                        prevFloorRight: foundationCenter + foundationWidth / 2
+                    };
+                }
+                
+                return {
+                    prevFloorLeft: this.gameState.lastFloorX - this.gameState.lastFloorWidth / 2,
+                    prevFloorRight: this.gameState.lastFloorX + this.gameState.lastFloorWidth / 2
+                };
+            }
+
+            calculateOverlap(currentX, prevFloorLeft, prevFloorRight) {
+                const currentFloorLeft = currentX;
+                const currentFloorRight = currentX + this.entities.movingBlock.width;
+                const overlapLeft = Math.max(prevFloorLeft, currentFloorLeft);
+                const overlapRight = Math.min(prevFloorRight, currentFloorRight);
+                const overlapWidth = Math.max(0, overlapRight - overlapLeft);
+
+                return { overlapLeft, overlapRight, overlapWidth };
+            }
+
+            placeFloorAtPosition(overlapLeft, overlapWidth) {
+                this.gameState.currentFloor.style.width = `${overlapWidth}px`;
+                this.gameState.currentFloor.classList.remove('floor--moving'); // Убираем класс движения
+                this.gameState.currentFloor.style.left = `${overlapLeft}px`; // Финальная позиция через left
+                this.gameState.currentFloor.style.transform = 'none'; // Сбрасываем transform
+            }
+
+            updateGameState(overlapLeft, overlapWidth) {
+                this.gameState.lastFloorWidth = overlapWidth;
+                this.gameState.lastFloorX = overlapLeft + overlapWidth / 2;
+                this.gameState.score++;
+                this.updateScore();
+                this.gameState.floorSpeed = Math.min(1.5 + this.gameState.score * 0.05, 5);
+                
+                // Обновляем скорость в логических объектах
+                this.entities.movingBlock.velocity = this.gameState.floorSpeed;
+                
+                this.gameState.floors = this.gameState.floors.filter(f => f !== null);
+                this.updateCamera();
+                // Убираем вызов updateCranePosition() - теперь кран обновляется автоматически в updateLogic()
+            }
+
+            handleCutParts(currentX, prevFloorLeft, prevFloorRight, originalFloorWidth) {
+                const currentFloorBottom = this.entities.movingBlock.y;  // Используем данные из памяти вместо DOM
+                const MIN_CUT_WIDTH = 5;
+            
+                if (currentX < prevFloorLeft) {
+                    const cutWidth = prevFloorLeft - currentX;
+                    if (cutWidth >= MIN_CUT_WIDTH) {
+                        this.animateCutPart(currentX, currentFloorBottom, cutWidth, -1);
+                    }
+                }
+                
+                if (currentX + originalFloorWidth > prevFloorRight) {
+                    const cutWidth = currentX + originalFloorWidth - prevFloorRight;
+                    if (cutWidth >= MIN_CUT_WIDTH) {
+                        this.animateCutPart(prevFloorRight, currentFloorBottom, cutWidth, 1);
+                    }
+                }
+            }
+
+            animateCutPart(x, y, width, direction) {
+                // ОПТИМИЗАЦИЯ: Используем пул вместо создания нового элемента
+                const part = this.objectPools.cutParts.get();
+                // Настраиваем элемент (пул возвращает "чистый" элемент)
+                part.className = 'floor floor--falling';
+                part.style.display = 'block';
+                part.style.width = `${width}px`;
+                part.style.height = `${this.config.FLOOR_HEIGHT}px`;
+                part.style.left = `${x}px`;
+                part.style.bottom = `${y}px`;
+                part.style.background = 'url(\'./assets/images/block.svg\') repeat-x left center';
+                part.style.backgroundSize = 'auto 100%';
+                part.style.border = '1px solid #D1E0DF';
+                this.elements.gameArea.appendChild(part);
+
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        part.style.transform = `translateX(${direction * 200}px) translateY(600px) rotate(${direction * 90}deg)`;
+                    });
+                }, 10);
+
+                // ОПТИМИЗАЦИЯ: Возвращаем в пул вместо удаления
+                setTimeout(() => {
+                    if (part.parentNode) {
+                        part.parentNode.removeChild(part);
+                    }
+                    this.objectPools.cutParts.return(part);
+                }, 800);
+            }
+
+            animateFall(element) {
+                element.classList.remove('floor--animated');
+                element.style.transition = 'transform 1s ease-in';
+                element.style.transform = 'translateY(800px) rotate(45deg)';
+            }
+
+            showCrane() {
+                this.entities.crane.visible = true;
+                this.elements.crane.style.opacity = '1';
+            }
+
+            hideCrane() {
+                this.entities.crane.visible = false;
+                this.elements.crane.style.opacity = '0';
+            }
+
+            craneExitAndReturn() {
+                // Используем оптимизированный рендерер для анимации выхода крана
+                this.elements.crane.classList.remove('crane--moving');
+                this.elements.crane.style.transition = 'transform 0.8s ease-in-out';
+                this.directRenderer.setPosition(this.elements.crane, -1100, this.entities.crane.y);
+                
+                setTimeout(() => {
+                    if (this.gameState.gameActive) {
+                        this.createFloor();
+                        this.gameState.isPlacing = false;
+                    }
+
+                    setTimeout(() => {
+                        if (this.gameState.gameActive) {
+                            this.elements.crane.style.transition = 'transform 0.8s ease-in-out';
+                            // Кран обновляется автоматически через updateLogic/render
+                        }
+                    }, 100);
+                }, 800);
+            }
+
+            createClouds() {
+                const currentLevel = this.gameState.cameraLevel;
+                const cloudsPerLevel = 2;
+                
+                for (let i = 0; i < cloudsPerLevel; i++) {
+                    // ОПТИМИЗАЦИЯ: Используем пул вместо создания нового элемента
+                    const cloud = this.objectPools.clouds.get();
+                    // Настраиваем элемент (пул возвращает "чистый" элемент)
+                    cloud.className = 'cloud cloud--dynamic';
+                    cloud.style.display = 'block';
+                    
+                    const cloudType = Math.floor(Math.random() * this.config.CLOUD_IMAGES.length) + 1;
+                    const cloudImage = this.config.CLOUD_IMAGES[cloudType - 1];
+                    
+                    const width = 100 + Math.random() * 120;
+                    const height = width * 0.6;
+                    const top = this.config.CLOUD_SPAWN_HEIGHT + Math.random() * 300;
+                    const animationDuration = 20 + Math.random() * 15;
+                    const delay = Math.random() * 10;
+                    
+                    cloud.style.width = `${width}px`;
+                    cloud.style.height = `${height}px`;
+                    cloud.style.top = `${top}px`;
+                    cloud.style.left = '-300px';
+                    cloud.style.position = 'absolute';
+                    cloud.style.backgroundImage = `url('./assets/images/${cloudImage}')`;
+                    cloud.style.backgroundSize = 'contain';
+                    cloud.style.backgroundRepeat = 'no-repeat';
+                    cloud.style.opacity = '0.8';
+                    cloud.style.animation = `cloudDynamic ${animationDuration}s linear infinite ${delay}s`;
+                    
+                    this.elements.clouds.appendChild(cloud);
+                    
+                    // ОПТИМИЗАЦИЯ: Автоматически возвращаем в пул после анимации
+                    setTimeout(() => {
+                        if (cloud.parentNode) {
+                            cloud.parentNode.removeChild(cloud);
+                        }
+                        this.objectPools.clouds.return(cloud);
+                    }, (animationDuration + delay) * 1000);
+                }
+            }
+
+            updateCamera() {
+                const floorsPerCameraMove = 10;
+                const currentCameraLevel = Math.floor(this.gameState.score / floorsPerCameraMove);
+                
+                if (currentCameraLevel > this.gameState.cameraLevel) {
+                    const levelDifference = currentCameraLevel - this.gameState.cameraLevel;
+                    const cameraShift = levelDifference * floorsPerCameraMove * (this.config.FLOOR_HEIGHT + 1);
+                    
+                    this.elements.foundation.classList.add('animated');
+                    this.elements.road.classList.add('animated');
+                    this.elements.buildings.classList.add('animated');
+                    this.gameState.floors.forEach(floor => {
+                        if (floor) {
+                            floor.classList.add('floor--animated');
+                        }
+                    });
+                    
+                    const foundationBottom = parseFloat(this.elements.foundation.style.bottom || this.config.FOUNDATION_BOTTOM);
+                    const roadBottom = parseFloat(this.elements.road.style.bottom || 0);
+                    const buildingsBottom = parseFloat(this.elements.buildings.style.bottom || 0);
+                    
+                    const buildingsShift = cameraShift * 0.33;
+                    
+                    this.elements.foundation.style.bottom = `${foundationBottom - cameraShift}px`;
+                    this.elements.road.style.bottom = `${roadBottom - cameraShift}px`;
+                    this.elements.buildings.style.bottom = `${buildingsBottom - buildingsShift}px`;
+                    
+                    this.gameState.floors.forEach(floor => {
+                        if (floor) {
+                            const currentBottom = parseFloat(floor.style.bottom);
+                            floor.style.bottom = `${currentBottom - cameraShift}px`;
+                        }
+                    });
+                    
+                    if (this.gameState.currentFloor) {
+                        const currentBottom = parseFloat(this.gameState.currentFloor.style.bottom);
+                        this.gameState.currentFloor.style.bottom = `${currentBottom - cameraShift}px`;
+                    }
+                    
+                    this.gameState.cameraLevel = currentCameraLevel;
+                    
+                    this.createClouds();
+                }
+            }
+
+            // Старая функция updateCranePosition() удалена - теперь кран обновляется автоматически в updateLogic()
+
+            updateScore() {
+                this.elements.score.textContent = `ЭТАЖЕЙ: ${this.gameState.score}`;
+            }
+
+            gameOver() {
+                this.gameState.gameActive = false;
+                this.gameState.isPlacing = false;
+                
+                if (this.gameState.animationId) {
+                    cancelAnimationFrame(this.gameState.animationId);
+                    this.gameState.animationId = null;
+                }
+                
+                this.stopBackgroundMusic();
+                this.playGameOverSound();
+                this.hideCrane();
+                
+                setTimeout(() => {
+                    this.showStartModal();
+                }, 1000);
+                
+                setTimeout(() => {
+                    this.clearGameArea();
+                    this.resetElementPositions();
+                }, 2000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new TowerGame();
+        });
+    </script>
+</body>
+</html>
