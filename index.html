@@ -551,16 +551,16 @@
             </div>
         </div>
 
-        <audio class="js-tap-sound" preload="auto">
+        <audio class="js-tap-sound" preload="none">
             <source src="./assets/sounds/tap.mp3" type="audio/mpeg">
         </audio>
-        <audio class="js-background-music" preload="auto" loop>
+        <audio class="js-background-music" preload="none" loop>
             <source src="./assets/sounds/background.mp3" type="audio/mpeg">
         </audio>
-        <audio class="js-game-over-sound" preload="auto">
+        <audio class="js-game-over-sound" preload="none">
             <source src="./assets/sounds/game-over.mp3" type="audio/mpeg">
         </audio>
-        <audio class="js-place-sound" preload="auto">
+        <audio class="js-place-sound" preload="none">
             <source src="./assets/sounds/place.mp3" type="audio/mpeg">
         </audio>
     </div>
@@ -733,6 +733,10 @@
                     fallbackPlay(name) {
                         const audio = document.querySelector(`.js-${name.replace('Sound', '')}-sound`);
                         if (audio) {
+                            // Для мобильных Safari загружаем аудио по требованию
+                            if (audio.readyState < 2) {
+                                audio.load();
+                            }
                             audio.currentTime = 0;
                             audio.play().catch(e => console.log(`Could not play ${name}:`, e));
                         }
@@ -961,18 +965,68 @@
                     const audioPromises = resources.audio.map(src => {
                         return new Promise((resolve) => {
                             const audio = new Audio();
+                            let resolved = false;
+                            
+                            // Таймаут для Safari мобильный - если аудио не загрузилось за 3 сек, пропускаем
+                            const timeout = setTimeout(() => {
+                                if (!resolved) {
+                                    console.warn(`Audio loading timeout: ${src}`);
+                                    resolved = true;
+                                    loadedResources++;
+                                    updateProgress();
+                                    resolve(null);
+                                }
+                            }, 3000);
+                            
                             audio.oncanplaythrough = () => {
-                                loadedResources++;
-                                updateProgress();
-                                resolve(audio);
+                                if (!resolved) {
+                                    resolved = true;
+                                    clearTimeout(timeout);
+                                    loadedResources++;
+                                    updateProgress();
+                                    resolve(audio);
+                                }
                             };
+                            
+                            audio.onloadeddata = () => {
+                                // Дополнительная проверка для Safari iOS
+                                if (!resolved) {
+                                    resolved = true;
+                                    clearTimeout(timeout);
+                                    loadedResources++;
+                                    updateProgress();
+                                    resolve(audio);
+                                }
+                            };
+                            
                             audio.onerror = () => {
-                                console.warn(`Failed to load audio: ${src}`);
-                                loadedResources++;
-                                updateProgress();
-                                resolve(null);
+                                if (!resolved) {
+                                    console.warn(`Failed to load audio: ${src}`);
+                                    resolved = true;
+                                    clearTimeout(timeout);
+                                    loadedResources++;
+                                    updateProgress();
+                                    resolve(null);
+                                }
                             };
-                            audio.src = src;
+                            
+                            // Для Safari iOS убираем preload и загружаем по требованию
+                            const isSafariMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                            if (isSafariMobile) {
+                                // В Safari iOS просто помечаем как загруженное без реальной загрузки
+                                setTimeout(() => {
+                                    if (!resolved) {
+                                        resolved = true;
+                                        clearTimeout(timeout);
+                                        loadedResources++;
+                                        updateProgress();
+                                        resolve(audio);
+                                    }
+                                }, 100);
+                            } else {
+                                audio.preload = 'auto';
+                                audio.src = src;
+                            }
                         });
                     });
 
@@ -987,6 +1041,16 @@
                     console.error('Preloading failed:', error);
                     this.handleLoadingError(error);
                 }
+                
+                // Дополнительная проверка для Safari iOS - если прошло больше 5 секунд, завершаем загрузку принудительно
+                const maxLoadingTime = 5000;
+                setTimeout(() => {
+                    if (this.elements.loadingScreen && this.elements.loadingScreen.style.display !== 'none') {
+                        console.warn('Forcing loading completion due to timeout');
+                        this.hideLoadingModal();
+                        this.showStartModal();
+                    }
+                }, maxLoadingTime);
             }
 
             updateLoadingProgress(percentage) {
@@ -1016,18 +1080,24 @@
             }
 
             handleLoadingError() {
+                const isSafariMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                
                 if (this.elements.loadingText) {
-                    this.elements.loadingText.textContent = 'Ошибка загрузки, но игра все равно готова!';
+                    if (isSafariMobile) {
+                        this.elements.loadingText.textContent = 'Игра готова! (Звуки загрузятся при необходимости)';
+                    } else {
+                        this.elements.loadingText.textContent = 'Ошибка загрузки, но игра все равно готова!';
+                    }
                 }
                 
                 if (this.elements.loadingPercentage) {
-                    this.elements.loadingPercentage.textContent = '⚠️';
+                    this.elements.loadingPercentage.textContent = isSafariMobile ? '100%' : '⚠️';
                 }
 
                 setTimeout(() => {
                     this.hideLoadingModal();
                     this.showStartModal();
-                }, 2000);
+                }, 1500);
             }
 
             handleVisibilityChange() {
@@ -1079,6 +1149,10 @@
 
             playBackgroundMusic() {
                 try {
+                    // Для мобильных Safari загружаем аудио по требованию
+                    if (this.audio.backgroundMusic.readyState < 2) {
+                        this.audio.backgroundMusic.load();
+                    }
                     this.audio.backgroundMusic.currentTime = 0;
                     this.audio.backgroundMusic.play().catch(e => console.log('Could not play background music:', e));
                 } catch (e) {
@@ -1097,6 +1171,10 @@
 
             playGameOverSound() {
                 try {
+                    // Для мобильных Safari загружаем аудио по требованию
+                    if (this.audio.gameOverSound.readyState < 2) {
+                        this.audio.gameOverSound.load();
+                    }
                     this.audio.gameOverSound.currentTime = 0;
                     this.audio.gameOverSound.play().catch(e => console.log('Could not play game over sound:', e));
                 } catch (e) {
